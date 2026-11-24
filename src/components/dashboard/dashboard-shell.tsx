@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
+import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
 
 export function DashboardShell({
   name,
@@ -34,7 +35,7 @@ export function DashboardShell({
           <nav className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/dashboard"
-              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
             >
               <LayoutDashboard className="size-4" />
               Dashboard
@@ -42,7 +43,7 @@ export function DashboardShell({
             {role === "student" && (
               <Link
                 href="/dashboard/student/applications"
-                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
               >
                 <FileText className="size-4" />
                 Applications
@@ -51,7 +52,7 @@ export function DashboardShell({
             {role === "tutor" && (
               <Link
                 href="/dashboard/tutor/applicants"
-                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
               >
                 <Users className="size-4" />
                 Applicants
@@ -60,7 +61,7 @@ export function DashboardShell({
             {role === "tutor" && (
               <Link
                 href="/dashboard/tutor/tuitions"
-                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
               >
                 <BriefcaseBusiness className="size-4" />
                 My Tuitions
@@ -69,7 +70,7 @@ export function DashboardShell({
             {role === "admin" && (
               <Link
                 href="/dashboard/admin/moderation"
-                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
               >
                 <ClipboardCheck className="size-4" />
                 Moderation
@@ -77,28 +78,29 @@ export function DashboardShell({
             )}
             <Link
               href="/dashboard/profile"
-              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
             >
               <UserRound className="size-4" />
               Profile
             </Link>
             <Link
               href="/tuitions"
-              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted xl:inline-flex"
             >
               <GraduationCap className="size-4" />
               Tuitions
             </Link>
-            <span className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:inline-flex">
+            <span className="hidden rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary xl:inline-flex">
               {roleLabel}
             </span>
+            <DashboardMobileNav role={role} />
             <SignOutButton />
           </nav>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-8 lg:py-8">
-        <aside className="hidden self-start rounded-2xl border bg-background p-5 lg:block">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[260px_minmax(0,1fr)] lg:px-8 lg:py-8">
+        <aside className="hidden self-start rounded-2xl border bg-background p-5 xl:block">
           <div className="truncate font-semibold">{name}</div>
           <div className="mt-1 truncate text-sm text-muted-foreground">{email}</div>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium">

@@ -19,7 +19,7 @@ export default function PricingPage() {
       </section>
 
       <section className="py-16 sm:py-20">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
           {pricingPlans.map((plan) => (
             <article
               key={plan.name}

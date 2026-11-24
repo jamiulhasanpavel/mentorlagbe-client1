@@ -45,6 +45,7 @@ export function Navbar() {
           variant="ghost"
           className="md:hidden"
           aria-expanded={open}
+          aria-controls="public-navigation"
           aria-label={open ? "Close navigation" : "Open navigation"}
           onClick={() => setOpen((current) => !current)}
         >
@@ -52,30 +53,28 @@ export function Navbar() {
         </Button>
       </nav>
 
-      {open && (
-        <div className="border-t px-4 py-4 md:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Link href="/sign-in" onClick={() => setOpen(false)}>
-                <Button variant="outline" className="w-full">Sign In</Button>
-              </Link>
-              <Link href="/sign-up" onClick={() => setOpen(false)}>
-                <Button className="w-full">Get Started</Button>
-              </Link>
-            </div>
+      <div id="public-navigation" hidden={!open} className="border-t px-4 py-4 md:hidden">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2">
+          {navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Link href="/sign-in" onClick={() => setOpen(false)}>
+              <Button variant="outline" className="w-full">Sign In</Button>
+            </Link>
+            <Link href="/sign-up" onClick={() => setOpen(false)}>
+              <Button className="w-full">Get Started</Button>
+            </Link>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }
