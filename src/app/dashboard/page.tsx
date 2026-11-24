@@ -20,13 +20,8 @@ async function DashboardOverview() {
     redirect("/sign-in?callbackURL=%2Fdashboard");
   }
 
-  const isTutor = session.user.role === "tutor";
-  const workspaceHref = isTutor ? "/dashboard/tutor" : "/dashboard/student";
-  const workspaceTitle = isTutor ? "Tutor dashboard" : "Student dashboard";
-  const workspaceDescription = isTutor
-    ? "Manage your tuition assignments and teaching activity."
-    : "Review your applications and track their progress.";
-  const WorkspaceIcon = isTutor ? BriefcaseBusiness : FileText;
+  const workspace = getWorkspace(session.user.role);
+  const WorkspaceIcon = workspace.icon;
 
   return (
     <div>
@@ -40,14 +35,14 @@ async function DashboardOverview() {
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         <Link
-          href={workspaceHref}
+          href={workspace.href}
           className="group rounded-2xl border bg-background p-6 transition-shadow hover:shadow-lg"
         >
           <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <WorkspaceIcon className="size-5" />
           </span>
-          <h2 className="mt-5 text-lg font-bold">{workspaceTitle}</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{workspaceDescription}</p>
+          <h2 className="mt-5 text-lg font-bold">{workspace.title}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{workspace.description}</p>
           <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
             Open dashboard
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
@@ -83,6 +78,33 @@ async function DashboardOverview() {
       </div>
     </div>
   );
+}
+
+function getWorkspace(role: string) {
+  if (role === "admin") {
+    return {
+      href: "/dashboard/admin",
+      title: "Admin dashboard",
+      description: "Review platform moderation tools and marketplace content.",
+      icon: ShieldCheck,
+    };
+  }
+
+  if (role === "tutor") {
+    return {
+      href: "/dashboard/tutor",
+      title: "Tutor dashboard",
+      description: "Manage your tuition assignments and teaching activity.",
+      icon: BriefcaseBusiness,
+    };
+  }
+
+  return {
+    href: "/dashboard/student",
+    title: "Student dashboard",
+    description: "Review your applications and track their progress.",
+    icon: FileText,
+  };
 }
 
 function DashboardOverviewLoading() {

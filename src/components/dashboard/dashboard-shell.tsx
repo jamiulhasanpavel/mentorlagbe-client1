@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { BriefcaseBusiness, FileText, GraduationCap, LayoutDashboard, Users } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  ClipboardCheck,
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  Users,
+} from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
 
 export function DashboardShell({
@@ -13,7 +20,7 @@ export function DashboardShell({
   role: string;
   children: React.ReactNode;
 }) {
-  const roleLabel = role === "tutor" ? "Tutor" : "Student";
+  const roleLabel = role === "admin" ? "Administrator" : role === "tutor" ? "Tutor" : "Student";
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -56,6 +63,15 @@ export function DashboardShell({
               >
                 <BriefcaseBusiness className="size-4" />
                 My Tuitions
+              </Link>
+            )}
+            {role === "admin" && (
+              <Link
+                href="/dashboard/admin/moderation"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              >
+                <ClipboardCheck className="size-4" />
+                Moderation
               </Link>
             )}
             <Link
@@ -129,6 +145,24 @@ export function DashboardShell({
                 >
                   <BriefcaseBusiness className="size-4" />
                   My tuitions
+                </Link>
+              </>
+            )}
+            {role === "admin" && (
+              <>
+                <Link
+                  href="/dashboard/admin"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <LayoutDashboard className="size-4" />
+                  Admin dashboard
+                </Link>
+                <Link
+                  href="/dashboard/admin/moderation"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <ClipboardCheck className="size-4" />
+                  Content moderation
                 </Link>
               </>
             )}
