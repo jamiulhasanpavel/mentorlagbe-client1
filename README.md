@@ -26,6 +26,8 @@ The app exposes Better Auth at `/api/auth` and stores users and sessions in Mong
 
 The signup role is stored as a validated `student` or `tutor` user field. Admin access is not available through public signup; provision administrator roles through a trusted server-side process. For a separate auth origin, set `NEXT_PUBLIC_AUTH_URL` to its full `/api/auth` endpoint and include the frontend origin in `BETTER_AUTH_TRUSTED_ORIGINS`.
 
+Payments use SSLCOMMERZ hosted checkout in BDT. Configure `APP_BASE_URL` as a publicly reachable HTTPS origin in production, plus `SSLCOMMERZ_STORE_ID`, `SSLCOMMERZ_STORE_PASSWORD`, and `SSLCOMMERZ_SANDBOX` from your merchant account. For local sandbox testing, expose the app through a public HTTPS tunnel and use that URL for `APP_BASE_URL`; SSLCOMMERZ cannot call `localhost`. Sandbox mode is enabled unless `SSLCOMMERZ_SANDBOX=false`. The monthly plan prices are one-time payments with manual renewal, not automatic subscriptions. Return callbacks and IPN notifications are verified against SSLCOMMERZ before payment status is updated. Validated payment transactions are stored in MongoDB; plan-feature entitlement checks are not yet connected to app features.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -1,28 +1,7 @@
 import Link from "next/link";
 import { Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const plans = [
-  {
-    name: "Free",
-    price: "৳0",
-    description: "For learners who are starting their search.",
-    features: ["Browse all tuitions", "Create one application", "Basic profile"],
-  },
-  {
-    name: "Student Plus",
-    price: "৳299",
-    description: "For students who want faster mentor matching.",
-    features: ["Unlimited applications", "Priority placement", "Verified tutor badges", "Direct support"],
-    popular: true,
-  },
-  {
-    name: "Tutor Pro",
-    price: "৳499",
-    description: "For tutors growing their teaching opportunities.",
-    features: ["Unlimited tuition applications", "Tutor profile promotion", "Applicant insights", "Priority support"],
-  },
-];
+import { pricingPlans } from "@/features/payments/plans";
 
 export default function PricingPage() {
   return (
@@ -41,7 +20,7 @@ export default function PricingPage() {
 
       <section className="py-16 sm:py-20">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-3 lg:px-8">
-          {plans.map((plan) => (
+          {pricingPlans.map((plan) => (
             <article
               key={plan.name}
               className={`relative flex flex-col rounded-2xl border bg-background p-6 shadow-sm ${
@@ -57,7 +36,7 @@ export default function PricingPage() {
               <p className="mt-2 min-h-12 text-sm text-muted-foreground">{plan.description}</p>
               <p className="mt-6 text-4xl font-bold">
                 {plan.price}
-                {plan.price !== "৳0" && (
+                {plan.amount > 0 && (
                   <span className="text-sm font-normal text-muted-foreground"> / month</span>
                 )}
               </p>
@@ -69,9 +48,12 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/sign-up" className="mt-8">
+              <Link
+                href={plan.amount > 0 ? `/payment/checkout?plan=${plan.id}` : "/sign-up"}
+                className="mt-8"
+              >
                 <Button variant={plan.popular ? "default" : "outline"} className="w-full">
-                  Get started
+                  {plan.amount > 0 ? "Continue to checkout" : "Get started"}
                 </Button>
               </Link>
             </article>

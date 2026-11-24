@@ -6,7 +6,7 @@ const globalForMongo = globalThis as typeof globalThis & {
   mongoClient?: MongoClient;
 };
 
-const mongoClient =
+export const mongoClient =
   globalForMongo.mongoClient ??
   new MongoClient(
     process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017",
