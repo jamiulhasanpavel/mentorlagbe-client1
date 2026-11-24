@@ -6,9 +6,18 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/providers/toast-provider";
+
+function getCallbackURL() {
+  const callbackURL = new URLSearchParams(window.location.search).get("callbackURL");
+  return callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+    ? callbackURL
+    : "/";
+}
 
 export default function SignInPage() {
   const router = useRouter();
+  const showToast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -22,13 +31,14 @@ export default function SignInPage() {
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
     const rememberMe = formData.get("remember") === "on";
+    const callbackURL = getCallbackURL();
 
     try {
       const { error } = await authClient.signIn.email({
         email,
         password,
         rememberMe,
-        callbackURL: "/",
+        callbackURL,
       });
 
       if (error) {
@@ -36,7 +46,8 @@ export default function SignInPage() {
         return;
       }
 
-      router.replace("/");
+      showToast("Login successful. Welcome back!");
+      router.replace(callbackURL);
       router.refresh();
     } catch (error: unknown) {
       setErrorMessage(
@@ -52,18 +63,22 @@ export default function SignInPage() {
   async function handleGoogleSignIn() {
     setIsSubmitting(true);
     setErrorMessage("");
+    window.sessionStorage.setItem("mentorlagbe:google-login-success", "true");
+    const callbackURL = getCallbackURL();
 
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL,
       });
 
       if (error) {
+        window.sessionStorage.removeItem("mentorlagbe:google-login-success");
         setErrorMessage(error.message || "Unable to continue with Google.");
         setIsSubmitting(false);
       }
     } catch (error: unknown) {
+      window.sessionStorage.removeItem("mentorlagbe:google-login-success");
       setErrorMessage(
         error instanceof Error
           ? error.message
