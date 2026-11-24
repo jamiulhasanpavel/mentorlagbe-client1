@@ -5,6 +5,7 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  UserRound,
   Users,
 } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
@@ -74,6 +75,13 @@ export function DashboardShell({
                 Moderation
               </Link>
             )}
+            <Link
+              href="/dashboard/profile"
+              className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+            >
+              <UserRound className="size-4" />
+              Profile
+            </Link>
             <Link
               href="/tuitions"
               className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
@@ -166,6 +174,13 @@ export function DashboardShell({
                 </Link>
               </>
             )}
+            <Link
+              href="/dashboard/profile"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <UserRound className="size-4" />
+              Profile
+            </Link>
             <Link
               href="/tuitions"
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"

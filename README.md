@@ -22,7 +22,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Authentication
 
-The app exposes Better Auth at `/api/auth` and stores users and sessions in MongoDB. Configure `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` using `.env.example`. `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both required to enable Google sign-in; the provider is omitted if either is missing.
+The app exposes Better Auth at `/api/auth` and stores users and sessions in MongoDB. Configure `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` using `.env.example`. `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both required to enable Google sign-in; the provider is omitted if either is missing. Profile photo uploads use the server-only `IMGBB_API_KEY`; uploads remain disabled until it is configured.
 
 The signup role is stored as a validated `student` or `tutor` user field. Admin access is not available through public signup; provision administrator roles through a trusted server-side process. For a separate auth origin, set `NEXT_PUBLIC_AUTH_URL` to its full `/api/auth` endpoint and include the frontend origin in `BETTER_AUTH_TRUSTED_ORIGINS`.
 
