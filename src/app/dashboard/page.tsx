@@ -1,4 +1,4 @@
-import { ArrowRight, GraduationCap, ShieldCheck } from "lucide-react";
+import { ArrowRight, FileText, GraduationCap, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -13,6 +13,23 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <Link
+          href="/dashboard/student"
+          className="group rounded-2xl border bg-background p-6 transition-shadow hover:shadow-lg"
+        >
+          <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <FileText className="size-5" />
+          </span>
+          <h2 className="mt-5 text-lg font-bold">Student dashboard</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Review your applications and track their progress.
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+            Open dashboard
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+          </span>
+        </Link>
+
         <Link
           href="/tuitions"
           className="group rounded-2xl border bg-background p-6 transition-shadow hover:shadow-lg"
@@ -30,7 +47,7 @@ export default function DashboardPage() {
           </span>
         </Link>
 
-        <div className="rounded-2xl border bg-background p-6">
+        <div className="rounded-2xl border bg-background p-6 md:col-span-2">
           <span className="flex size-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700">
             <ShieldCheck className="size-5" />
           </span>

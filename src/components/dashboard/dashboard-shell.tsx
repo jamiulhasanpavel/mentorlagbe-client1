@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, LayoutDashboard } from "lucide-react";
+import { FileText, GraduationCap, LayoutDashboard } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
 
 export function DashboardShell({
@@ -31,6 +31,15 @@ export function DashboardShell({
               <LayoutDashboard className="size-4" />
               Dashboard
             </Link>
+            {role === "student" && (
+              <Link
+                href="/dashboard/student/applications"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              >
+                <FileText className="size-4" />
+                Applications
+              </Link>
+            )}
             <Link
               href="/tuitions"
               className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
@@ -57,11 +66,29 @@ export function DashboardShell({
           <nav className="mt-6 space-y-1">
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2.5 text-sm font-semibold text-primary"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <LayoutDashboard className="size-4" />
               Overview
             </Link>
+            {role === "student" && (
+              <>
+                <Link
+                  href="/dashboard/student"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <GraduationCap className="size-4" />
+                  Student dashboard
+                </Link>
+                <Link
+                  href="/dashboard/student/applications"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <FileText className="size-4" />
+                  My applications
+                </Link>
+              </>
+            )}
             <Link
               href="/tuitions"
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
