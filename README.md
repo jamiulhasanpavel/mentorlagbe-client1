@@ -20,6 +20,12 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Authentication
+
+The app exposes Better Auth at `/api/auth` and stores users and sessions in MongoDB. Configure `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` using `.env.example`. `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both required to enable Google sign-in; the provider is omitted if either is missing.
+
+The signup role is stored as a validated `student` or `tutor` user field. For a separate auth origin, set `NEXT_PUBLIC_AUTH_URL` to its full `/api/auth` endpoint and include the frontend origin in `BETTER_AUTH_TRUSTED_ORIGINS`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

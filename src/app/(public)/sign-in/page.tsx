@@ -2,11 +2,76 @@
 
 import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignInPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const rememberMe = formData.get("remember") === "on";
+
+    try {
+      const { error } = await authClient.signIn.email({
+        email,
+        password,
+        rememberMe,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setErrorMessage(error.message || "Unable to sign in. Please try again.");
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to the authentication service. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setErrorMessage(error.message || "Unable to continue with Google.");
+        setIsSubmitting(false);
+      }
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to the authentication service. Please try again.",
+      );
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12 sm:px-6">
@@ -20,7 +85,7 @@ export default function SignInPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-5">
+          <form className="mt-8 space-y-5" onSubmit={handleSignIn}>
             <label className="grid gap-2 text-sm font-medium">
               Email address
               <span className="relative">
@@ -70,11 +135,17 @@ export default function SignInPage() {
               Remember me
             </label>
 
-            <Button type="submit" className="w-full" size="lg">
-              Sign In
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign In"}
               <ArrowRight />
             </Button>
           </form>
+
+          {errorMessage && (
+            <p role="alert" className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
 
           <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="h-px flex-1 bg-border" />
@@ -82,7 +153,14 @@ export default function SignInPage() {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <Button type="button" variant="outline" className="w-full" size="lg">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            size="lg"
+            onClick={handleGoogleSignIn}
+            disabled={isSubmitting}
+          >
             <span className="font-bold">G</span>
             Continue with Google
           </Button>

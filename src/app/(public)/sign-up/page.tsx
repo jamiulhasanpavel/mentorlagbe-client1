@@ -2,11 +2,51 @@
 
 import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleSignUp(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const formData = new FormData(event.currentTarget);
+    const role = formData.get("role") === "tutor" ? "tutor" : "student";
+
+    try {
+      const { error } = await authClient.signUp.email({
+        name: String(formData.get("name") ?? ""),
+        email: String(formData.get("email") ?? ""),
+        password: String(formData.get("password") ?? ""),
+        role,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setErrorMessage(error.message || "Unable to create your account. Please try again.");
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to the authentication service. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12 sm:px-6">
@@ -20,33 +60,33 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          <fieldset className="mt-7">
-            <legend className="mb-2 text-sm font-medium">I want to</legend>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="cursor-pointer">
-                <input type="radio" name="role" value="student" className="peer sr-only" defaultChecked />
-                <span className="flex h-full items-center gap-3 rounded-xl border p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5">
-                  <UserRound className="size-5 text-primary" />
-                  <span>
-                    <span className="block text-sm font-semibold">Find a tutor</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">As a student or guardian</span>
+          <form className="mt-7 space-y-5" onSubmit={handleSignUp}>
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium">I want to</legend>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="cursor-pointer">
+                  <input type="radio" name="role" value="student" className="peer sr-only" defaultChecked />
+                  <span className="flex h-full items-center gap-3 rounded-xl border p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5">
+                    <UserRound className="size-5 text-primary" />
+                    <span>
+                      <span className="block text-sm font-semibold">Find a tutor</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">As a student or guardian</span>
+                    </span>
                   </span>
-                </span>
-              </label>
-              <label className="cursor-pointer">
-                <input type="radio" name="role" value="tutor" className="peer sr-only" />
-                <span className="flex h-full items-center gap-3 rounded-xl border p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5">
-                  <GraduationCap className="size-5 text-primary" />
-                  <span>
-                    <span className="block text-sm font-semibold">Become a tutor</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">Apply for tuitions</span>
+                </label>
+                <label className="cursor-pointer">
+                  <input type="radio" name="role" value="tutor" className="peer sr-only" />
+                  <span className="flex h-full items-center gap-3 rounded-xl border p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5">
+                    <GraduationCap className="size-5 text-primary" />
+                    <span>
+                      <span className="block text-sm font-semibold">Become a tutor</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">Apply for tuitions</span>
+                    </span>
                   </span>
-                </span>
-              </label>
-            </div>
-          </fieldset>
+                </label>
+              </div>
+            </fieldset>
 
-          <form className="mt-6 space-y-5">
             <label className="grid gap-2 text-sm font-medium">
               Full name
               <span className="relative">
@@ -112,11 +152,17 @@ export default function SignUpPage() {
               </span>
             </label>
 
-            <Button type="submit" className="w-full" size="lg">
-              Create account
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Creating account..." : "Create account"}
               <ArrowRight />
             </Button>
           </form>
+
+          {errorMessage && (
+            <p role="alert" className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
