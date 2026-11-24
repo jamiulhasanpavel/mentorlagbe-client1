@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, GraduationCap, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = {
-  title: "Sign Up | MentorLagbe",
-};
-
 export default function SignUpPage() {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12 sm:px-6">
       <div className="w-full max-w-lg">
@@ -83,13 +83,22 @@ export default function SignUpPage() {
                 <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   minLength={8}
                   autoComplete="new-password"
                   placeholder="At least 8 characters"
-                  className="h-11 w-full rounded-lg border bg-background pl-10 pr-3 outline-none transition-shadow focus:ring-3 focus:ring-ring/30"
+                  className="h-11 w-full rounded-lg border bg-background pl-10 pr-10 outline-none transition-shadow focus:ring-3 focus:ring-ring/30"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </span>
             </label>
 
