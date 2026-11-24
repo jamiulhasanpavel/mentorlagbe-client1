@@ -58,11 +58,41 @@ const tuitions = [
     salary: "15,000 BDT/month",
     schedule: "4 days/week",
   },
+  {
+    id: "class-9-chemistry-bashundhara",
+    title: "Class 9 Chemistry Home Tutor",
+    location: "Bashundhara, Dhaka",
+    subject: "Chemistry",
+    className: "Class 9",
+    salary: "9,500 BDT/month",
+    schedule: "3 days/week",
+  },
+  {
+    id: "ielts-preparation-gulshan",
+    title: "IELTS Preparation Tutor",
+    location: "Gulshan, Dhaka",
+    subject: "English",
+    className: "Professional",
+    salary: "16,000 BDT/month",
+    schedule: "Flexible",
+  },
+  {
+    id: "primary-bangla-uttara",
+    title: "Primary Level Bangla Tutor",
+    location: "Uttara, Dhaka",
+    subject: "Bangla",
+    className: "Primary",
+    salary: "7,500 BDT/month",
+    schedule: "5 days/week",
+  },
 ];
 
 type SearchParams = Promise<{
   query?: string | string[];
   subject?: string | string[];
+  location?: string | string[];
+  className?: string | string[];
+  page?: string | string[];
 }>;
 
 async function TuitionResults({
@@ -73,8 +103,15 @@ async function TuitionResults({
   const params = await searchParams;
   const queryValue = Array.isArray(params.query) ? params.query[0] : params.query;
   const subjectValue = Array.isArray(params.subject) ? params.subject[0] : params.subject;
+  const locationValue = Array.isArray(params.location) ? params.location[0] : params.location;
+  const classValue = Array.isArray(params.className) ? params.className[0] : params.className;
+  const pageValue = Array.isArray(params.page) ? params.page[0] : params.page;
   const query = queryValue?.trim() ?? "";
   const subject = subjectValue?.trim() ?? "";
+  const locationFilter = locationValue?.trim() ?? "";
+  const classFilter = classValue?.trim() ?? "";
+  const requestedPage = Number.parseInt(pageValue ?? "1", 10);
+  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const filteredTuitions = tuitions.filter((tuition) => {
     const searchableText =
@@ -82,8 +119,38 @@ async function TuitionResults({
     const matchesQuery = !query || searchableText.includes(query.toLowerCase());
     const matchesSubject =
       !subject || tuition.subject.toLowerCase() === subject.toLowerCase();
-    return matchesQuery && matchesSubject;
+    const matchesLocation =
+      !locationFilter || tuition.location.toLowerCase().includes(locationFilter.toLowerCase());
+    const matchesClass =
+      !classFilter || tuition.className.toLowerCase() === classFilter.toLowerCase();
+    return matchesQuery && matchesSubject && matchesLocation && matchesClass;
   });
+
+  const itemsPerPage = 6;
+  const totalPages = Math.max(1, Math.ceil(filteredTuitions.length / itemsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedTuitions = filteredTuitions.slice(
+    (safePage - 1) * itemsPerPage,
+    safePage * itemsPerPage,
+  );
+
+  const subjects = [...new Set(tuitions.map((tuition) => tuition.subject))];
+  const locations = [...new Set(tuitions.map((tuition) => tuition.location.split(",")[0]))];
+  const classes = [...new Set(tuitions.map((tuition) => tuition.className))];
+
+  const buildHref = (page: number, overrides?: { subject?: string; location?: string; className?: string }) => {
+    const nextSubject = overrides?.subject ?? subject;
+    const nextLocation = overrides?.location ?? locationFilter;
+    const nextClass = overrides?.className ?? classFilter;
+    const search = new URLSearchParams();
+    if (query) search.set("query", query);
+    if (nextSubject) search.set("subject", nextSubject);
+    if (nextLocation) search.set("location", nextLocation);
+    if (nextClass) search.set("className", nextClass);
+    if (page > 1) search.set("page", String(page));
+    const queryString = search.toString();
+    return `/tuitions${queryString ? `?${queryString}` : ""}`;
+  };
 
   return (
     <main>
@@ -109,17 +176,21 @@ async function TuitionResults({
               />
             </label>
             {subject && <input type="hidden" name="subject" value={subject} />}
+            {locationFilter && <input type="hidden" name="location" value={locationFilter} />}
+            {classFilter && <input type="hidden" name="className" value={classFilter} />}
             <Button type="submit" size="lg" className="h-11">
               Search
               <ArrowRight />
             </Button>
           </form>
 
-          {(query || subject) && (
+          {(query || subject || locationFilter || classFilter) && (
             <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground">Active search:</span>
               {subject && <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">{subject}</span>}
               {query && <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">{query}</span>}
+              {locationFilter && <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">{locationFilter}</span>}
+              {classFilter && <span className="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">{classFilter}</span>}
               <Link href="/tuitions" className="ml-1 underline underline-offset-4">
                 Clear
               </Link>
@@ -130,6 +201,46 @@ async function TuitionResults({
 
       <section className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <form action="/tuitions" className="mb-7 grid gap-4 rounded-xl border bg-muted/20 p-4 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+              Subject
+              <select
+                name="subject"
+                defaultValue={subject}
+                className="h-10 rounded-lg border bg-background px-3 text-sm"
+              >
+                <option value="">All subjects</option>
+                {subjects.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+              Location
+              <select
+                name="location"
+                defaultValue={locationFilter}
+                className="h-10 rounded-lg border bg-background px-3 text-sm"
+              >
+                <option value="">All locations</option>
+                {locations.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-semibold text-muted-foreground">
+              Class level
+              <select
+                name="className"
+                defaultValue={classFilter}
+                className="h-10 rounded-lg border bg-background px-3 text-sm"
+              >
+                <option value="">All levels</option>
+                {classes.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            {query && <input type="hidden" name="query" value={query} />}
+            <Button type="submit" className="h-10 self-end">
+              Apply filters
+            </Button>
+          </form>
+
           <div className="mb-7 flex items-center justify-between">
             <h2 className="text-xl font-bold">
               {filteredTuitions.length} tuition{filteredTuitions.length === 1 ? "" : "s"} found
@@ -137,42 +248,75 @@ async function TuitionResults({
           </div>
 
           {filteredTuitions.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {filteredTuitions.map((tuition) => (
-                <article
-                  key={tuition.id}
-                  className="flex flex-col rounded-2xl border bg-background p-5 shadow-sm transition-shadow hover:shadow-lg"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                      {tuition.subject}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{tuition.className}</span>
-                  </div>
-                  <h3 className="mt-5 text-lg font-bold">{tuition.title}</h3>
-                  <div className="mt-5 space-y-2.5 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
-                      <MapPin className="size-4 text-primary" />
-                      {tuition.location}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Wallet className="size-4 text-primary" />
-                      {tuition.salary}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Clock3 className="size-4 text-primary" />
-                      {tuition.schedule}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/tuitions/${tuition.id}`}
-                    className="mt-6 flex h-9 items-center justify-center rounded-lg border text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+            <>
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {paginatedTuitions.map((tuition) => (
+                  <article
+                    key={tuition.id}
+                    className="flex flex-col rounded-2xl border bg-background p-5 shadow-sm transition-shadow hover:shadow-lg"
                   >
-                    View details
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {tuition.subject}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{tuition.className}</span>
+                    </div>
+                    <h3 className="mt-5 text-lg font-bold">{tuition.title}</h3>
+                    <div className="mt-5 space-y-2.5 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2">
+                        <MapPin className="size-4 text-primary" />
+                        {tuition.location}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Wallet className="size-4 text-primary" />
+                        {tuition.salary}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Clock3 className="size-4 text-primary" />
+                        {tuition.schedule}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/tuitions/${tuition.id}`}
+                      className="mt-6 flex h-9 items-center justify-center rounded-lg border text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                    >
+                      View details
+                    </Link>
+                  </article>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Tuition pages">
+                  <Link
+                    href={buildHref(Math.max(1, safePage - 1))}
+                    aria-disabled={safePage === 1}
+                    className={`rounded-lg border px-3 py-2 text-sm ${safePage === 1 ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+                  >
+                    Previous
                   </Link>
-                </article>
-              ))}
-            </div>
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <Link
+                      key={page}
+                      href={buildHref(page)}
+                      aria-current={safePage === page ? "page" : undefined}
+                      className={`size-9 rounded-lg border text-center text-sm leading-9 ${
+                        safePage === page ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted"
+                      }`}
+                    >
+                      {page}
+                    </Link>
+                  ))}
+                  <Link
+                    href={buildHref(Math.min(totalPages, safePage + 1))}
+                    aria-disabled={safePage === totalPages}
+                    className={`rounded-lg border px-3 py-2 text-sm ${safePage === totalPages ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+                  >
+                    Next
+                  </Link>
+                </nav>
+              )}
+            </>
           ) : (
             <div className="rounded-2xl border border-dashed px-6 py-16 text-center">
               <h3 className="text-lg font-bold">No matching tuitions</h3>
