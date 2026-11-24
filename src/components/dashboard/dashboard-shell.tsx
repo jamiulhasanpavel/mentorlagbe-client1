@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BriefcaseBusiness, FileText, GraduationCap, LayoutDashboard } from "lucide-react";
+import { BriefcaseBusiness, FileText, GraduationCap, LayoutDashboard, Users } from "lucide-react";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
 
 export function DashboardShell({
@@ -38,6 +38,15 @@ export function DashboardShell({
               >
                 <FileText className="size-4" />
                 Applications
+              </Link>
+            )}
+            {role === "tutor" && (
+              <Link
+                href="/dashboard/tutor/applicants"
+                className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted sm:inline-flex"
+              >
+                <Users className="size-4" />
+                Applicants
               </Link>
             )}
             {role === "tutor" && (
@@ -106,6 +115,13 @@ export function DashboardShell({
                 >
                   <GraduationCap className="size-4" />
                   Tutor dashboard
+                </Link>
+                <Link
+                  href="/dashboard/tutor/applicants"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <Users className="size-4" />
+                  Applicants
                 </Link>
                 <Link
                   href="/dashboard/tutor/tuitions"

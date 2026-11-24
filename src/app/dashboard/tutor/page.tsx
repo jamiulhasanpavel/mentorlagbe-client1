@@ -61,6 +61,13 @@ export default function TutorDashboardPage() {
             Manage tuitions
             <ArrowRight className="size-4" />
           </Link>
+          <Link
+            href="/dashboard/tutor/applicants"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+          >
+            Manage applicants
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
 
         <div className="flex flex-col items-center px-5 py-12 text-center">
