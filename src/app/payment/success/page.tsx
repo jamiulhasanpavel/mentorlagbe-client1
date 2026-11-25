@@ -3,13 +3,13 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getBackendSession } from "@/lib/backend-auth";
 import { Button } from "@/components/ui/button";
 import { paidPlans } from "@/features/payments/plans";
-import { getUserPaymentTransaction } from "@/lib/payments/sslcommerz";
+import { getUserStripePayment } from "@/lib/payments/stripe";
 
 type SearchParams = Promise<{
-  tran_id?: string | string[];
+  session_id?: string | string[];
 }>;
 
 export default function PaymentSuccessPage({
@@ -26,27 +26,29 @@ export default function PaymentSuccessPage({
 
 async function PaymentSuccessContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const tranId = Array.isArray(params.tran_id) ? params.tran_id[0] : params.tran_id;
-  if (!tranId || !/^[a-f0-9]{24}$/.test(tranId)) {
+  const sessionId = Array.isArray(params.session_id)
+    ? params.session_id[0]
+    : params.session_id;
+  if (!sessionId || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
     notFound();
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
   if (!session) {
-    const callbackUrl = `/payment/success?tran_id=${encodeURIComponent(tranId)}`;
+    const callbackUrl = `/payment/success?session_id=${encodeURIComponent(sessionId)}`;
     redirect(`/sign-in?callbackURL=${encodeURIComponent(callbackUrl)}`);
   }
 
-  const payment = await getUserPaymentTransaction(tranId, session.user.id);
+  const payment = await getUserStripePayment(sessionId, await headers());
   if (!payment) {
     notFound();
   }
 
   if (payment.status === "pending") {
-    redirect(`/payment/pending?tran_id=${encodeURIComponent(tranId)}`);
+    redirect(`/payment/pending?session_id=${encodeURIComponent(sessionId)}`);
   }
   if (payment.status !== "paid") {
-    redirect(`/payment/cancel?tran_id=${encodeURIComponent(tranId)}`);
+    redirect("/payment/cancel");
   }
 
   const plan = paidPlans.find((item) => item.id === payment.planId);
@@ -54,7 +56,7 @@ async function PaymentSuccessContent({ searchParams }: { searchParams: SearchPar
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Asia/Dhaka",
-  }).format(payment.paidAt ?? payment.updatedAt);
+  }).format(new Date(payment.updatedAt));
 
   return (
     <main className="flex min-h-full items-center justify-center bg-muted/20 px-4 py-14 sm:px-6">
@@ -67,17 +69,25 @@ async function PaymentSuccessContent({ searchParams }: { searchParams: SearchPar
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Thank you for your payment</h1>
         <p className="mt-3 leading-7 text-muted-foreground">
-          SSLCOMMERZ verified your payment for {plan?.name ?? "your plan"}.
+          Stripe verified your subscription for {plan?.name ?? "your plan"}.
         </p>
 
         <dl className="mt-7 space-y-3 rounded-xl border bg-muted/20 p-5 text-left text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Amount</dt>
-            <dd className="font-semibold">৳{payment.amount.toFixed(2)}</dd>
+            <dd className="font-semibold">
+              {new Intl.NumberFormat(payment.currency.toUpperCase() === "BDT" ? "en-BD" : "en-US", {
+                style: "currency",
+                currency: payment.currency.toUpperCase(),
+                ...(payment.currency.toUpperCase() === "BDT"
+                  ? { currencyDisplay: "narrowSymbol" as const, maximumFractionDigits: 0 }
+                  : {}),
+              }).format(payment.amount / 100)}
+            </dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Transaction ID</dt>
-            <dd className="break-all text-right font-mono text-xs">{payment.tranId}</dd>
+            <dt className="text-muted-foreground">Checkout ID</dt>
+            <dd className="break-all text-right font-mono text-xs">{payment.stripeSessionId}</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Paid on</dt>
@@ -86,7 +96,7 @@ async function PaymentSuccessContent({ searchParams }: { searchParams: SearchPar
         </dl>
 
         <p className="mt-5 text-sm text-muted-foreground">
-          This is a one-month purchase. Renew manually when you are ready; no automatic renewal is set up.
+          Your plan is active and renews monthly through Stripe.
         </p>
         <Link href="/dashboard" className="mt-7 inline-block">
           <Button>Return to dashboard</Button>

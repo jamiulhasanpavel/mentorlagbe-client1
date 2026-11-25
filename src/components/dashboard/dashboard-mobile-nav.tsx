@@ -5,10 +5,13 @@ import { useState } from "react";
 import {
   BriefcaseBusiness,
   ClipboardCheck,
+  CreditCard,
   FileText,
   GraduationCap,
   LayoutDashboard,
+  Mail,
   Menu,
+  Shield,
   UserRound,
   Users,
   X,
@@ -30,10 +33,12 @@ function getDashboardLinks(role: string): DashboardLink[] {
     links.push(
       { href: "/dashboard/student", label: "Student dashboard", icon: GraduationCap },
       { href: "/dashboard/student/applications", label: "My applications", icon: FileText },
+      { href: "/dashboard/student/messages", label: "Messages", icon: Mail },
     );
   } else if (role === "tutor") {
     links.push(
       { href: "/dashboard/tutor", label: "Tutor dashboard", icon: GraduationCap },
+      { href: "/dashboard/tutor/messages", label: "Messages", icon: Mail },
       { href: "/dashboard/tutor/applicants", label: "Applicants", icon: Users },
       { href: "/dashboard/tutor/tuitions", label: "My tuitions", icon: BriefcaseBusiness },
     );
@@ -41,6 +46,8 @@ function getDashboardLinks(role: string): DashboardLink[] {
     links.push(
       { href: "/dashboard/admin", label: "Admin dashboard", icon: LayoutDashboard },
       { href: "/dashboard/admin/moderation", label: "Content moderation", icon: ClipboardCheck },
+      { href: "/dashboard/admin/users", label: "User management", icon: Shield },
+      { href: "/dashboard/admin/payments", label: "Payment history", icon: CreditCard },
     );
   }
 
@@ -56,7 +63,7 @@ export function DashboardMobileNav({ role }: { role: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative xl:hidden">
+    <div className="relative lg:hidden">
       <Button
         type="button"
         size="icon"

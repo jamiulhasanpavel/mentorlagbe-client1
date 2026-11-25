@@ -2,11 +2,19 @@
 
 import Image from "next/image";
 import { Camera, LoaderCircle, UserRound } from "lucide-react";
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type FormEvent,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/providers/toast-provider";
-import { authClient } from "@/lib/auth-client";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -15,16 +23,32 @@ type ProfileFormProps = {
   name: string;
   email: string;
   image: string | null;
+  phone?: string;
+  bio?: string;
+  bannerImage?: string | null;
   role: string;
 };
 
-export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
+export function ProfileForm({
+  name,
+  email,
+  image,
+  phone: initialPhone = "",
+  bio: initialBio = "",
+  bannerImage = null,
+  role,
+}: ProfileFormProps) {
   const router = useRouter();
   const showToast = useToast();
   const previewObjectUrl = useRef<string | null>(null);
+  const bannerPreviewObjectUrl = useRef<string | null>(null);
   const [displayName, setDisplayName] = useState(name);
+  const [phone, setPhone] = useState(initialPhone);
+  const [bio, setBio] = useState(initialBio);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedBannerImage, setSelectedBannerImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(image);
+  const [bannerPreview, setBannerPreview] = useState(bannerImage);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -33,38 +57,39 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
       if (previewObjectUrl.current) {
         URL.revokeObjectURL(previewObjectUrl.current);
       }
+      if (bannerPreviewObjectUrl.current) {
+        URL.revokeObjectURL(bannerPreviewObjectUrl.current);
+      }
     },
     [],
   );
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleImageChange(
+    event: ChangeEvent<HTMLInputElement>,
+    setSelected: Dispatch<SetStateAction<File | null>>,
+    setPreview: Dispatch<SetStateAction<string | null>>,
+    previewUrl: MutableRefObject<string | null>,
+  ) {
     const file = event.currentTarget.files?.[0] ?? null;
     setErrorMessage("");
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setErrorMessage("Choose a JPEG, PNG, or WebP image.");
       event.currentTarget.value = "";
       return;
     }
-
     if (file.size > MAX_FILE_SIZE) {
       setErrorMessage("The image must be 5 MB or smaller.");
       event.currentTarget.value = "";
       return;
     }
-
-    if (previewObjectUrl.current) {
-      URL.revokeObjectURL(previewObjectUrl.current);
-    }
+    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
 
     const objectUrl = URL.createObjectURL(file);
-    previewObjectUrl.current = objectUrl;
-    setSelectedImage(file);
-    setImagePreview(objectUrl);
+    previewUrl.current = objectUrl;
+    setSelected(file);
+    setPreview(objectUrl);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -72,18 +97,23 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
     setErrorMessage("");
 
     const trimmedName = displayName.trim();
-    if (!trimmedName) {
-      setErrorMessage("Name is required.");
+    if (trimmedName.length < 2) {
+      setErrorMessage("Name must be at least 2 characters.");
+      return;
+    }
+    if (phone.trim().length > 30 || bio.trim().length > 500) {
+      setErrorMessage("Phone number must be 30 characters or less and bio 500 characters or less.");
       return;
     }
 
     setIsSaving(true);
     let updatedImage: string | undefined;
+    let updatedBannerImage: string | undefined;
 
     try {
-      if (selectedImage) {
+      async function uploadImage(file: File, description: string) {
         const uploadData = new FormData();
-        uploadData.set("image", selectedImage);
+        uploadData.set("image", file);
 
         const uploadResponse = await fetch("/api/profile/avatar", {
           method: "POST",
@@ -104,22 +134,49 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
             "error" in uploadResult &&
             typeof uploadResult.error === "string"
               ? uploadResult.error
-              : "Unable to upload the profile photo. Please try again.";
-          setErrorMessage(message);
-          return;
+              : `Unable to upload ${description}. Please try again.`;
+          throw new Error(message);
         }
 
-        updatedImage = uploadResult.url;
+        return uploadResult.url;
       }
 
-      const { error } = await authClient.updateUser({
-        name: trimmedName,
-        ...(updatedImage ? { image: updatedImage } : {}),
-      });
+      if (selectedImage) {
+        updatedImage = await uploadImage(selectedImage, "the profile photo");
+      }
+      if (selectedBannerImage) {
+        updatedBannerImage = await uploadImage(selectedBannerImage, "the tutor banner");
+      }
 
-      if (error) {
-        setErrorMessage(error.message || "Unable to update your profile. Please try again.");
-        return;
+      const response = await fetch("/api/users/me", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: trimmedName,
+          phone: phone.trim(),
+          bio: bio.trim(),
+          ...(updatedImage ? { image: updatedImage } : {}),
+          ...(updatedBannerImage ? { bannerImage: updatedBannerImage } : {}),
+        }),
+      });
+      const result: unknown = await response.json();
+
+      if (
+        !response.ok ||
+        !result ||
+        typeof result !== "object" ||
+        !("success" in result) ||
+        result.success !== true
+      ) {
+        const message =
+          result &&
+          typeof result === "object" &&
+          "message" in result &&
+          typeof result.message === "string"
+            ? result.message
+            : "Unable to update your profile. Please try again.";
+        throw new Error(message);
       }
 
       if (updatedImage) {
@@ -128,6 +185,14 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
         if (previewObjectUrl.current) {
           URL.revokeObjectURL(previewObjectUrl.current);
           previewObjectUrl.current = null;
+        }
+      }
+      if (updatedBannerImage) {
+        setBannerPreview(updatedBannerImage);
+        setSelectedBannerImage(null);
+        if (bannerPreviewObjectUrl.current) {
+          URL.revokeObjectURL(bannerPreviewObjectUrl.current);
+          bannerPreviewObjectUrl.current = null;
         }
       }
 
@@ -177,9 +242,58 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
             id="profile-image"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={handleImageChange}
+            onChange={(event) =>
+              handleImageChange(
+                event,
+                setSelectedImage,
+                setImagePreview,
+                previewObjectUrl,
+              )
+            }
             className="sr-only"
           />
+          {role === "tutor" && (
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex h-16 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                {bannerPreview ? (
+                  <Image
+                    src={bannerPreview}
+                    alt="Tutor banner preview"
+                    width={112}
+                    height={64}
+                    unoptimized
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">No banner</span>
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">Tutor banner</h3>
+                <label
+                  htmlFor="tutor-banner"
+                  className="mt-2 inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors hover:bg-muted"
+                >
+                  <Camera className="size-4" />
+                  Choose banner
+                </label>
+                <input
+                  id="tutor-banner"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) =>
+                    handleImageChange(
+                      event,
+                      setSelectedBannerImage,
+                      setBannerPreview,
+                      bannerPreviewObjectUrl,
+                    )
+                  }
+                  className="sr-only"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -191,9 +305,22 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
             type="text"
             autoComplete="name"
             required
+            minLength={2}
             maxLength={100}
             value={displayName}
             onChange={(event) => setDisplayName(event.currentTarget.value)}
+            className="h-11 rounded-lg border bg-background px-3 outline-none transition-shadow focus:ring-3 focus:ring-ring/30"
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Phone number
+          <input
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            maxLength={30}
+            value={phone}
+            onChange={(event) => setPhone(event.currentTarget.value)}
             className="h-11 rounded-lg border bg-background px-3 outline-none transition-shadow focus:ring-3 focus:ring-ring/30"
           />
         </label>
@@ -206,6 +333,20 @@ export function ProfileForm({ name, email, image, role }: ProfileFormProps) {
             readOnly
             className="h-11 rounded-lg border bg-muted/40 px-3 text-muted-foreground outline-none"
           />
+        </label>
+        <label className="grid gap-2 text-sm font-medium sm:col-span-2">
+          Bio
+          <textarea
+            name="bio"
+            maxLength={500}
+            rows={4}
+            value={bio}
+            onChange={(event) => setBio(event.currentTarget.value)}
+            className="resize-y rounded-lg border bg-background px-3 py-2 outline-none transition-shadow focus:ring-3 focus:ring-ring/30"
+          />
+          <span className="text-xs font-normal text-muted-foreground">
+            {bio.length}/500 characters
+          </span>
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Account type

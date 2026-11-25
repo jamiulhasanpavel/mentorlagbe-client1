@@ -1,14 +1,14 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getBackendSession } from "@/lib/backend-auth";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_REQUEST_SIZE = MAX_FILE_SIZE + 64 * 1024;
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
 
   if (!session) {
-    return Response.json({ error: "Sign in to upload a profile photo." }, { status: 401 });
+    return Response.json({ error: "Sign in to upload a profile image." }, { status: 401 });
   }
 
   const contentLength = request.headers.get("content-length");
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const apiKey = process.env.IMGBB_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "Profile photo uploads are not configured yet." },
+      { error: "Profile image uploads are not configured yet." },
       { status: 503 },
     );
   }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(20_000),
     });
   } catch (error) {
-    console.error("ImgBB avatar upload request failed.", error);
+    console.error("ImgBB profile image upload request failed.", error);
     return Response.json(
       { error: "The image service could not be reached. Please try again." },
       { status: 502 },
@@ -76,7 +76,10 @@ export async function POST(request: Request) {
   }
 
   if (!uploadResponse.ok) {
-    console.error("ImgBB avatar upload returned an unsuccessful response.", uploadResponse.status);
+    console.error(
+      "ImgBB profile image upload returned an unsuccessful response.",
+      uploadResponse.status,
+    );
     return Response.json(
       { error: "The image service could not upload this photo. Please try again." },
       { status: 502 },

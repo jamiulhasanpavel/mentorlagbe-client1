@@ -24,12 +24,12 @@ export default function PricingPage() {
             <article
               key={plan.name}
               className={`relative flex flex-col rounded-2xl border bg-background p-6 shadow-sm ${
-                plan.popular ? "border-primary shadow-lg md:-translate-y-3" : ""
+                plan.recommended ? "border-primary shadow-lg md:-translate-y-3" : ""
               }`}
             >
-              {plan.popular && (
+              {plan.recommended && (
                 <span className="absolute right-5 top-5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                  Popular
+                  Recommended
                 </span>
               )}
               <h2 className="text-xl font-bold">{plan.name}</h2>
@@ -52,7 +52,7 @@ export default function PricingPage() {
                 href={plan.amount > 0 ? `/payment/checkout?plan=${plan.id}` : "/sign-up"}
                 className="mt-8"
               >
-                <Button variant={plan.popular ? "default" : "outline"} className="w-full">
+                <Button variant={plan.recommended ? "default" : "outline"} className="w-full">
                   {plan.amount > 0 ? "Continue to checkout" : "Get started"}
                 </Button>
               </Link>

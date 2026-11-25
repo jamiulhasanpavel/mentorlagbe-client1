@@ -1,17 +1,17 @@
 const freePlan = {
   id: "free",
   name: "Free",
-  price: "৳0",
+  price: "Free",
   amount: 0,
   description: "For learners who are starting their search.",
   features: ["Browse all tuitions", "Create one application", "Basic profile"],
-  popular: false,
+  recommended: false,
 };
 
 export const paidPlans = [
   {
     id: "student-plus",
-    name: "Student Plus",
+    name: "Student Pro",
     price: "৳299",
     amount: 299,
     description: "For students who want faster mentor matching.",
@@ -21,7 +21,7 @@ export const paidPlans = [
       "Verified tutor badges",
       "Direct support",
     ],
-    popular: true,
+    recommended: true,
   },
   {
     id: "tutor-pro",
@@ -30,12 +30,12 @@ export const paidPlans = [
     amount: 499,
     description: "For tutors growing their teaching opportunities.",
     features: [
-      "Unlimited tuition applications",
+      "Post unlimited tuitions",
       "Tutor profile promotion",
       "Applicant insights",
       "Priority support",
     ],
-    popular: false,
+    recommended: false,
   },
 ] as const;
 

@@ -3,10 +3,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ArrowLeft, Check, CreditCard, ShieldCheck } from "lucide-react";
-import { auth } from "@/lib/auth";
-import { SslCommerzCheckoutForm } from "@/components/payments/sslcommerz-checkout-form";
+import { getBackendSession } from "@/lib/backend-auth";
+import { StripeCheckoutButton } from "@/components/payments/stripe-checkout-button";
 import { getPaidPlan } from "@/features/payments/plans";
-import { getSslCommerzConfig } from "@/lib/payments/sslcommerz";
 
 type SearchParams = Promise<{
   plan?: string | string[];
@@ -29,7 +28,7 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
     notFound();
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
   if (!session) {
     const checkoutPath = `/payment/checkout?plan=${plan.id}`;
     redirect(`/sign-in?callbackURL=${encodeURIComponent(checkoutPath)}`);
@@ -53,8 +52,6 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
       </main>
     );
   }
-
-  const gatewayReady = getSslCommerzConfig() !== null;
 
   return (
     <main className="min-h-full bg-muted/20 px-4 py-10 sm:px-6 sm:py-14">
@@ -86,9 +83,9 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
                 <CreditCard className="size-5" />
               </span>
               <div>
-                <h2 className="font-bold">SSLCOMMERZ hosted checkout</h2>
+                <h2 className="font-bold">Stripe subscription checkout</h2>
                 <p className="text-sm text-muted-foreground">
-                  Pay securely using supported local payment methods.
+                  Upgrade your account with a secure monthly subscription.
                 </p>
               </div>
             </div>
@@ -99,16 +96,15 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
                 <div>
                   <p className="font-semibold">Payment details stay with the gateway</p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Card and mobile banking credentials are entered on the SSLCOMMERZ hosted page,
-                    not stored by MentorLagbe.
+                    Your payment details are entered on Stripe&apos;s secure checkout page, not stored by MentorLagbe.
                   </p>
                 </div>
               </div>
             </div>
 
-            <SslCommerzCheckoutForm planId={plan.id} enabled={gatewayReady} />
+            <StripeCheckoutButton planId={plan.id} />
             <p className="mt-4 text-center text-xs text-muted-foreground">
-              This is a one-time payment for one month. Renew manually each month.
+              Your subscription renews monthly until canceled.
             </p>
           </section>
 
@@ -117,7 +113,7 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
             <div className="mt-5 flex items-start justify-between gap-4 border-b pb-5">
               <div>
                 <p className="font-semibold">{plan.name}</p>
-                <p className="mt-1 text-sm text-muted-foreground">1 month · manual renewal</p>
+                <p className="mt-1 text-sm text-muted-foreground">Monthly subscription</p>
               </div>
               <p className="text-lg font-bold">{plan.price}</p>
             </div>
@@ -134,7 +130,7 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
               <span>{plan.price}</span>
             </div>
             <p className="mt-4 text-xs leading-5 text-muted-foreground">
-              Renewal is not automatic. You will need to make a new payment each month.
+              Subscription renewal is handled by Stripe.
             </p>
           </aside>
         </div>

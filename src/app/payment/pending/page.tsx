@@ -3,12 +3,12 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { Clock3 } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getBackendSession } from "@/lib/backend-auth";
 import { Button } from "@/components/ui/button";
-import { getUserPaymentTransaction } from "@/lib/payments/sslcommerz";
+import { getUserStripePayment } from "@/lib/payments/stripe";
 
 type SearchParams = Promise<{
-  tran_id?: string | string[];
+  session_id?: string | string[];
 }>;
 
 export default function PaymentPendingPage({
@@ -25,26 +25,28 @@ export default function PaymentPendingPage({
 
 async function PaymentPendingContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const tranId = Array.isArray(params.tran_id) ? params.tran_id[0] : params.tran_id;
-  if (!tranId || !/^[a-f0-9]{24}$/.test(tranId)) {
+  const sessionId = Array.isArray(params.session_id)
+    ? params.session_id[0]
+    : params.session_id;
+  if (!sessionId || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
     notFound();
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
   if (!session) {
-    const callbackUrl = `/payment/pending?tran_id=${encodeURIComponent(tranId)}`;
+    const callbackUrl = `/payment/pending?session_id=${encodeURIComponent(sessionId)}`;
     redirect(`/sign-in?callbackURL=${encodeURIComponent(callbackUrl)}`);
   }
 
-  const payment = await getUserPaymentTransaction(tranId, session.user.id);
+  const payment = await getUserStripePayment(sessionId, await headers());
   if (!payment) {
     notFound();
   }
   if (payment.status === "paid") {
-    redirect(`/payment/success?tran_id=${encodeURIComponent(tranId)}`);
+    redirect(`/payment/success?session_id=${encodeURIComponent(sessionId)}`);
   }
-  if (payment.status !== "pending") {
-    redirect(`/payment/cancel?tran_id=${encodeURIComponent(tranId)}`);
+  if (payment.status === "expired") {
+    redirect("/payment/cancel");
   }
 
   return (
@@ -58,15 +60,15 @@ async function PaymentPendingContent({ searchParams }: { searchParams: SearchPar
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">We are checking your payment</h1>
         <p className="mt-3 leading-7 text-muted-foreground">
-          SSLCOMMERZ has not confirmed this payment yet. Please wait a moment before trying again
-          to avoid duplicate payments.
+          Stripe has not confirmed the subscription yet. Wait briefly and check again to avoid
+          starting a duplicate checkout.
         </p>
         <p className="mt-5 break-all font-mono text-xs text-muted-foreground">
-          Transaction ID: {payment.tranId}
+          Checkout ID: {payment.stripeSessionId}
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <a
-            href={`/payment/pending?tran_id=${encodeURIComponent(tranId)}`}
+            href={`/payment/pending?session_id=${encodeURIComponent(sessionId)}`}
             className="inline-flex h-9 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted"
           >
             Check status again

@@ -1,7 +1,16 @@
 import Link from "next/link";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { ModerationQueue } from "@/components/dashboard/moderation-queue";
+import { getAdminTuitions, getDashboardData } from "@/lib/dashboard-data";
 
-export default function AdminModerationPage() {
+export default async function AdminModerationPage() {
+  const dashboard = await getDashboardData();
+  if (dashboard.role !== "admin") {
+    redirect(dashboard.role === "tutor" ? "/dashboard/tutor" : "/dashboard/student");
+  }
+  const pending = await getAdminTuitions("pending");
+
   return (
     <div>
       <Link
@@ -16,28 +25,18 @@ export default function AdminModerationPage() {
         <p className="text-sm font-semibold text-primary">Platform administration</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Content moderation</h1>
         <p className="mt-2 text-muted-foreground">
-          Review tuition listings before they are published on the marketplace.
+          Review tuition listings before publishing them on the marketplace.
         </p>
       </div>
 
-      <section className="mt-8 rounded-2xl border">
-        <div className="border-b p-5">
+      <section className="mt-8 rounded-2xl border p-5 sm:p-6">
+        <div className="mb-5">
           <h2 className="text-lg font-bold">Tuition review queue</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Listings awaiting moderation will be shown here.
+            Approve suitable listings or reject posts that do not meet marketplace requirements.
           </p>
         </div>
-
-        <div className="flex flex-col items-center px-5 py-12 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <ClipboardCheck className="size-5" />
-          </span>
-          <h3 className="mt-4 font-semibold">Moderation queue not connected</h3>
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            Tuition listings are currently static sample content. Connect listing submissions and
-            review actions to the database before using this page to approve or reject content.
-          </p>
-        </div>
+        <ModerationQueue tuitions={pending.data} total={pending.total} />
       </section>
     </div>
   );

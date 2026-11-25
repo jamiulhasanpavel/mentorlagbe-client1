@@ -1,7 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getBackendSession } from "@/lib/backend-auth";
 
 export default function AdminDashboardLayout({
   children,
@@ -16,7 +16,7 @@ export default function AdminDashboardLayout({
 }
 
 async function AdminOnly({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
 
   if (!session) {
     redirect("/sign-in?callbackURL=%2Fdashboard%2Fadmin");

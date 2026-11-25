@@ -38,6 +38,33 @@ export const auth = betterAuth({
         defaultValue: "student",
         input: true,
       },
+      plan: {
+        type: ["free", "student-plus", "tutor-pro"],
+        required: true,
+        defaultValue: "free",
+        input: false,
+      },
+      planStatus: {
+        type: ["inactive", "active", "past_due", "canceled"],
+        required: true,
+        defaultValue: "inactive",
+        input: false,
+      },
+      phone: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      bio: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+      bannerImage: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   ...(googleClientId && googleClientSecret

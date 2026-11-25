@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, FileText, GraduationCap, ShieldCheck } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { getBackendSession } from "@/lib/backend-auth";
 
 export default function DashboardPage() {
   return (
@@ -14,7 +14,7 @@ export default function DashboardPage() {
 }
 
 async function DashboardOverview() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getBackendSession(await headers());
 
   if (!session) {
     redirect("/sign-in?callbackURL=%2Fdashboard");

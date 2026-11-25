@@ -1,10 +1,10 @@
 import { BriefcaseBusiness, GraduationCap, Star, Users } from "lucide-react";
 
 const stats = [
-  { label: "Active Tuitions", value: "1,200+", icon: BriefcaseBusiness },
-  { label: "Verified Tutors", value: "500+", icon: GraduationCap },
-  { label: "Happy Learners", value: "1,000+", icon: Users },
-  { label: "Average Rating", value: "4.8/5", icon: Star },
+  { label: "Active Tutors", value: "500+", icon: GraduationCap },
+  { label: "Happy Students", value: "2,000+", icon: Users },
+  { label: "Approved Tuitions", value: "1,000+", icon: BriefcaseBusiness },
+  { label: "Success Rate", value: "98%", icon: Star },
 ];
 
 export function StatsSection() {

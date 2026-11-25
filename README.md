@@ -1,44 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MentorLagbe Client
 
-## Getting Started
+The Next.js frontend for MentorLagbe. Browser API and Better Auth requests use
+same-origin `/api` paths. Next.js proxies those requests to the Express backend,
+so authentication cookies remain on the frontend domain.
 
-First, run the development server:
+## Local development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env.local`.
+3. Set `BACKEND_API_URL=http://localhost:5000`.
+4. Set `IMGBB_API_KEY` if profile image uploads are needed.
+5. Start the frontend with `npm run dev` and the backend with `npm run dev` in
+   the server repository.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The frontend does not need MongoDB or Better Auth secrets; configure those only
+on the backend. Do not set `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_AUTH_URL` to
+the backend URL.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploying to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deploy the client and the Express backend as separate Vercel projects. Deploy
+the backend first so its origin is available to the frontend.
 
-## Authentication
+### Backend project
 
-The app exposes Better Auth at `/api/auth` and stores users and sessions in MongoDB. Configure `MONGODB_URI`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` using `.env.example`. `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both required to enable Google sign-in; the provider is omitted if either is missing. Profile photo uploads use the server-only `IMGBB_API_KEY`; uploads remain disabled until it is configured.
+Use the server repository and configure these Vercel environment variables:
 
-The signup role is stored as a validated `student` or `tutor` user field. Admin access is not available through public signup; provision administrator roles through a trusted server-side process. For a separate auth origin, set `NEXT_PUBLIC_AUTH_URL` to its full `/api/auth` endpoint and include the frontend origin in `BETTER_AUTH_TRUSTED_ORIGINS`.
+- `MONGODB_URI` and `DB_NAME`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`: the canonical frontend origin, without a trailing slash
+- `CLIENT_URL`: comma-separated exact frontend origins allowed by CORS
+- `BETTER_AUTH_TRUSTED_ORIGINS`: comma-separated exact origins trusted by Better Auth
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` if Google sign-in is enabled
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and the three Stripe return URLs
+- `IMGBB_API_KEY` if the backend also uses it
 
-Payments use SSLCOMMERZ hosted checkout in BDT. Configure `APP_BASE_URL` as a publicly reachable HTTPS origin in production, plus `SSLCOMMERZ_STORE_ID`, `SSLCOMMERZ_STORE_PASSWORD`, and `SSLCOMMERZ_SANDBOX` from your merchant account. For local sandbox testing, expose the app through a public HTTPS tunnel and use that URL for `APP_BASE_URL`; SSLCOMMERZ cannot call `localhost`. Sandbox mode is enabled unless `SSLCOMMERZ_SANDBOX=false`. The monthly plan prices are one-time payments with manual renewal, not automatic subscriptions. Return callbacks and IPN notifications are verified against SSLCOMMERZ before payment status is updated. Validated payment transactions are stored in MongoDB; plan-feature entitlement checks are not yet connected to app features.
+Set origins separately for the Vercel Production and Preview environments. Do
+not use a broad `*.vercel.app` wildcard. MongoDB Atlas must allow connections
+from the backend deployment's network; prefer a restricted/static egress setup
+where available.
 
-## Learn More
+After deployment, verify `https://<backend-domain>/api/health` returns a
+healthy response.
 
-To learn more about Next.js, take a look at the following resources:
+### Frontend project
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Use this repository with Vercel's Next.js defaults. Set:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `BACKEND_API_URL`: the backend deployment origin, such as
+  `https://<backend-domain>` (server-only; required at build time)
+- `IMGBB_API_KEY`: optional, required for profile image uploads
 
-## Deploy on Vercel
+Do not add backend credentials, MongoDB credentials, Stripe secrets, or
+`NEXT_PUBLIC_*` API/auth URLs to the frontend project. The browser uses
+same-origin requests and the Next.js rewrite/proxy handles backend routing.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Authentication, payments, and admin setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- In Google Cloud Console, register
+  `https://<frontend-domain>/api/auth/callback/google` as the authorized
+  redirect URI. Set `BETTER_AUTH_URL` to that frontend origin.
+- Set Stripe success, cancel, and portal return URLs to the deployed frontend.
+  Configure Stripe's webhook endpoint as
+  `https://<backend-domain>/api/payments/webhook` and subscribe to checkout
+  completion/expiration, invoice paid/payment failed, and subscription
+  updated/deleted events.
+- Create an administrator account through signup, then promote it from a
+  trusted machine with database access using
+  `npm run admin:promote -- admin@example.com --confirm` in the server
+  repository. Do not expose production database credentials to the frontend.
+- Seed sample tuition listings from a trusted environment with
+  `npm run seed:tuitions` in the server repository, if needed.
+- Demo sign-in is optional. Do not configure demo admin credentials for
+  production.
+
+After assigning custom domains, update the exact origin values, OAuth redirect
+URI, and Stripe return URLs, then redeploy both projects. Production behavior
+with live OAuth and Stripe credentials should be verified before opening the
+site to users.
+
+## Features
+
+- Tuition discovery, applications, tutor posting, moderation, and role-based
+  dashboards.
+- Tutor/student private messaging.
+- Student Pro at BDT ৳299/month and Tutor Pro at BDT ৳499/month through
+  Stripe-hosted checkout.
+- Profile fields and optional ImgBB profile image uploads.
