@@ -4,7 +4,7 @@ import type { auth } from "./auth";
 
 export const authBaseURL =
   typeof window === "undefined"
-    ? "http://localhost:3000/api/auth"
+    ? "https://mentorlagbe-client1.vercel.app/api/auth"
     : `${window.location.origin}/api/auth`;
 
 export const authClient = createAuthClient({
