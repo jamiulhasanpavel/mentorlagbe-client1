@@ -130,10 +130,19 @@ export default function SignInPage() {
         credentials: "include",
         body: JSON.stringify({ role }),
       });
-      const result = (await response.json()) as { message?: string };
+      let result: { message?: string } = {};
+      try {
+        result = (await response.json()) as { message?: string };
+      } catch {
+        result = {};
+      }
 
       if (!response.ok) {
-        setErrorMessage(result.message || "Unable to sign in to this demo account.");
+        setErrorMessage(
+          response.status === 404
+            ? "Demo login is unavailable. Please redeploy or restart the authentication backend."
+            : result.message || "Unable to sign in to this demo account.",
+        );
         return;
       }
 

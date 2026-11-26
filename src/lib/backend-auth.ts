@@ -21,12 +21,21 @@ export async function getBackendSession(
 ): Promise<BackendSession | null> {
   const cookie = requestHeaders.get("cookie");
 
-  const response = await fetch(`${getBackendApiUrl()}/api/auth/get-session`, {
-    cache: "no-store",
-    headers: cookie ? { cookie } : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getBackendApiUrl()}/api/auth/get-session`, {
+      cache: "no-store",
+      headers: cookie ? { cookie } : undefined,
+    });
+  } catch (error) {
+    console.error("Unable to reach the authentication service.", error);
+    return null;
+  }
 
   if (response.status === 401 || response.status === 403) {
+    return null;
+  }
+  if (response.status === 404 || response.status === 502 || response.status === 503 || response.status === 504) {
     return null;
   }
   if (!response.ok) {
