@@ -14,12 +14,20 @@ export type DashboardApplication = {
   message: string;
   createdAt: string;
   studentId?: string;
+  tutorName?: string;
+  tutorEmail?: string;
+  monthlyFee?: number;
+  studentName?: string;
+  studentEmail?: string;
+  studentPhone?: string;
+  preferredSchedule?: string;
 };
 
 export type AdminDashboardData = {
   role: "admin";
   stats: {
     users: number;
+    tutors: number;
     totalTuitions: number;
     pendingTuitions: number;
     approvedTuitions: number;
@@ -80,6 +88,9 @@ export type AdminPayment = {
   currency: string;
   status: string;
   createdAt?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: "student" | "tutor" | "admin";
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -106,7 +117,15 @@ function isApplication(value: unknown): value is DashboardApplication {
     typeof value.tuitionTitle === "string" &&
     ["pending", "accepted", "rejected"].includes(String(value.status)) &&
     typeof value.message === "string" &&
-    typeof value.createdAt === "string"
+    typeof value.createdAt === "string" &&
+    (value.tutorName === undefined || typeof value.tutorName === "string") &&
+    (value.tutorEmail === undefined || typeof value.tutorEmail === "string") &&
+    (value.monthlyFee === undefined || isNumber(value.monthlyFee)) &&
+    (value.studentName === undefined || typeof value.studentName === "string") &&
+    (value.studentEmail === undefined || typeof value.studentEmail === "string") &&
+    (value.studentPhone === undefined || typeof value.studentPhone === "string") &&
+    (value.preferredSchedule === undefined ||
+      typeof value.preferredSchedule === "string")
   );
 }
 
@@ -148,6 +167,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   if (
     data.role === "admin" &&
     isNumber(data.stats.users) &&
+    isNumber(data.stats.tutors) &&
     isNumber(data.stats.totalTuitions) &&
     isNumber(data.stats.pendingTuitions) &&
     isNumber(data.stats.approvedTuitions) &&
@@ -239,7 +259,9 @@ function isTuition(value: unknown): value is Tuition {
     typeof value.id === "string" &&
     typeof value.title === "string" &&
     typeof value.subject === "string" &&
-    (value.budget === undefined || typeof value.budget === "number")
+    (value.budget === undefined || value.budget === null || typeof value.budget === "number") &&
+    (value.daysPerWeek === undefined || typeof value.daysPerWeek === "number") &&
+    (value.bannerImage === undefined || typeof value.bannerImage === "string")
   );
 }
 
@@ -251,22 +273,36 @@ export async function getTutorTuitions(): Promise<Tuition[]> {
   return data;
 }
 
-export async function getAdminTuitions(status: "pending" | "approved" | "rejected") {
-  const data = await getApiData(`/api/tuition?status=${status}&limit=100`);
+export async function getAdminTuitions(
+  status: "pending" | "approved" | "rejected",
+  page = 1,
+) {
+  const data = await getApiData(
+    `/api/tuition?status=${status}&limit=100&page=${page}`,
+  );
   if (
     !isRecord(data) ||
     !Array.isArray(data.data) ||
     !data.data.every(isTuition) ||
     !isRecord(data.pagination) ||
-    !isNumber(data.pagination.total)
+    !isNumber(data.pagination.total) ||
+    !isNumber(data.pagination.page) ||
+    !isNumber(data.pagination.totalPages)
   ) {
     throw new Error("Tuition service returned an invalid moderation list.");
   }
-  return { data: data.data, total: data.pagination.total };
+  return {
+    data: data.data,
+    total: data.pagination.total,
+    page: data.pagination.page,
+    totalPages: data.pagination.totalPages,
+  };
 }
 
-export async function getAdminUsers(): Promise<{ data: AdminUser[]; total: number }> {
-  const data = await getApiData("/api/users/admin?limit=100");
+export async function getAdminUsers(
+  page = 1,
+): Promise<{ data: AdminUser[]; total: number; page: number; totalPages: number }> {
+  const data = await getApiData(`/api/users/admin?limit=100&page=${page}`);
   if (
     !isRecord(data) ||
     !Array.isArray(data.data) ||
@@ -279,7 +315,9 @@ export async function getAdminUsers(): Promise<{ data: AdminUser[]; total: numbe
         ["student", "tutor", "admin"].includes(String(user.role)),
     ) ||
     !isRecord(data.pagination) ||
-    !isNumber(data.pagination.total)
+    !isNumber(data.pagination.total) ||
+    !isNumber(data.pagination.page) ||
+    !isNumber(data.pagination.totalPages)
   ) {
     throw new Error("User service returned an invalid admin list.");
   }
@@ -296,11 +334,15 @@ export async function getAdminUsers(): Promise<{ data: AdminUser[]; total: numbe
       ...(typeof user.createdAt === "string" ? { createdAt: user.createdAt } : {}),
     })),
     total: data.pagination.total,
+    page: data.pagination.page,
+    totalPages: data.pagination.totalPages,
   };
 }
 
-export async function getAdminPayments(): Promise<{ data: AdminPayment[]; total: number }> {
-  const data = await getApiData("/api/payments/admin?limit=100");
+export async function getAdminPayments(
+  page = 1,
+): Promise<{ data: AdminPayment[]; total: number; page: number; totalPages: number }> {
+  const data = await getApiData(`/api/payments/admin?limit=100&page=${page}`);
   if (
     !isRecord(data) ||
     !Array.isArray(data.data) ||
@@ -317,7 +359,9 @@ export async function getAdminPayments(): Promise<{ data: AdminPayment[]; total:
         typeof payment.status === "string",
     ) ||
     !isRecord(data.pagination) ||
-    !isNumber(data.pagination.total)
+    !isNumber(data.pagination.total) ||
+    !isNumber(data.pagination.page) ||
+    !isNumber(data.pagination.totalPages)
   ) {
     throw new Error("Payment service returned an invalid admin list.");
   }
@@ -340,7 +384,16 @@ export async function getAdminPayments(): Promise<{ data: AdminPayment[]; total:
       currency: payment.currency as string,
       status: payment.status as string,
       ...(typeof payment.createdAt === "string" ? { createdAt: payment.createdAt } : {}),
+      ...(typeof payment.userName === "string" ? { userName: payment.userName } : {}),
+      ...(typeof payment.userEmail === "string" ? { userEmail: payment.userEmail } : {}),
+      ...(payment.userRole === "student" ||
+      payment.userRole === "tutor" ||
+      payment.userRole === "admin"
+        ? { userRole: payment.userRole }
+        : {}),
     })),
     total: data.pagination.total,
+    page: data.pagination.page,
+    totalPages: data.pagination.totalPages,
   };
 }

@@ -43,8 +43,8 @@ function getDashboardLinks(role: string): DashboardLink[] {
 
   if (role === "admin") {
     links.push({
-      href: "/dashboard/admin/moderation",
-      label: "Content moderation",
+      href: "/dashboard/admin/tuitions",
+      label: "Tuition approval",
       icon: ClipboardCheck,
     });
     links.push({
@@ -53,19 +53,19 @@ function getDashboardLinks(role: string): DashboardLink[] {
       icon: Shield,
     });
     links.push({
-      href: "/dashboard/admin/payments",
-      label: "Payment history",
+      href: "/dashboard/admin/transactions",
+      label: "Transactions",
       icon: CreditCard,
     });
   } else if (role === "tutor") {
     links.push(
       { href: "/dashboard/tutor/messages", label: "Messages", icon: Mail },
       { href: "/dashboard/tutor/applicants", label: "Applicants", icon: Users },
-      { href: "/dashboard/tutor/tuitions", label: "My tuitions", icon: BriefcaseBusiness },
+      { href: "/dashboard/tutor/my-tuitions", label: "My tuitions", icon: BriefcaseBusiness },
     );
   } else {
     links.push({
-      href: "/dashboard/student/applications",
+      href: "/dashboard/student/my-applications",
       label: "My applications",
       icon: FileText,
     });
@@ -84,16 +84,20 @@ function getPageTitle(pathname: string) {
     "/dashboard": "Overview",
     "/dashboard/admin": "Admin Dashboard",
     "/dashboard/admin/moderation": "Content Moderation",
+    "/dashboard/admin/tuitions": "Tuition Approval",
     "/dashboard/admin/users": "User Management",
     "/dashboard/admin/payments": "Payment History",
+    "/dashboard/admin/transactions": "Transaction Management",
     "/dashboard/profile": "Account Settings",
     "/dashboard/student": "Student Dashboard",
     "/dashboard/student/applications": "My Applications",
+    "/dashboard/student/my-applications": "My Applications",
     "/dashboard/student/messages": "Messages",
     "/dashboard/tutor": "Tutor Dashboard",
     "/dashboard/tutor/messages": "Messages",
     "/dashboard/tutor/applicants": "Applicants",
     "/dashboard/tutor/tuitions": "My Tuitions",
+    "/dashboard/tutor/my-tuitions": "My Tuitions",
   };
 
   return titles[pathname] || "Dashboard";

@@ -1,4 +1,7 @@
 import { getBackendApiUrl } from "@/lib/backend-url";
+import { formatTuitionBudget } from "@/lib/format-tuition-budget";
+
+export { formatTuitionBudget };
 
 export type Tuition = {
   id: string;
@@ -6,9 +9,11 @@ export type Tuition = {
   subject: string;
   description?: string;
   location?: string;
-  budget?: number;
+  budget?: number | null;
   className?: string;
   schedule?: string;
+  daysPerWeek?: number;
+  bannerImage?: string;
   mode?: string;
   gender?: string;
   status?: string;
@@ -57,7 +62,9 @@ function isTuition(value: unknown): value is Tuition {
     typeof value.id === "string" &&
     typeof value.title === "string" &&
     typeof value.subject === "string" &&
-    (value.budget === undefined || typeof value.budget === "number")
+    (value.budget === undefined || value.budget === null || typeof value.budget === "number") &&
+    (value.daysPerWeek === undefined || typeof value.daysPerWeek === "number") &&
+    (value.bannerImage === undefined || typeof value.bannerImage === "string")
   );
 }
 
@@ -132,9 +139,4 @@ export async function getTuition(id: string): Promise<Tuition> {
     throw new TuitionApiError("Tuition service returned an invalid record.", response.status);
   }
   return body.data;
-}
-
-export function formatTuitionBudget(budget?: number) {
-  if (typeof budget !== "number") return "Negotiable";
-  return `${new Intl.NumberFormat("en-BD").format(budget)} BDT/month`;
 }

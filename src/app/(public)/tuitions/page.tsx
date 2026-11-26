@@ -208,7 +208,7 @@ async function TuitionResults({
                       </p>
                       <p className="flex items-center gap-2">
                         <Wallet className="size-4 text-primary" />
-                        {tuition.budget === undefined
+                        {tuition.budget == null
                           ? "Negotiable"
                           : `${new Intl.NumberFormat("en-BD").format(tuition.budget)} BDT/month`}
                       </p>

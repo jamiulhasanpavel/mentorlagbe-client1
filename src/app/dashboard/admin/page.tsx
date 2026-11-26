@@ -2,13 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
+  CheckCircle2,
   ClipboardCheck,
-  CreditCard,
-  FileText,
+  CircleDollarSign,
   GraduationCap,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardStatCards } from "@/components/dashboard/dashboard-stat-cards";
 import { getAdminTuitions, getDashboardData } from "@/lib/dashboard-data";
 
 export default async function AdminDashboardPage() {
@@ -19,11 +20,19 @@ export default async function AdminDashboardPage() {
   const pending = await getAdminTuitions("pending");
 
   const stats = [
-    { label: "Registered users", value: dashboard.stats.users, icon: Users },
-    { label: "Tuition posts", value: dashboard.stats.totalTuitions, icon: GraduationCap },
-    { label: "Pending moderation", value: dashboard.stats.pendingTuitions, icon: ClipboardCheck },
-    { label: "Applications", value: dashboard.stats.applications, icon: FileText },
-    { label: "Paid payments", value: dashboard.stats.paidPayments, icon: CreditCard },
+    { label: "Total Users", value: dashboard.stats.users, icon: Users },
+    { label: "Total Tutors", value: dashboard.stats.tutors, icon: GraduationCap },
+    { label: "Pending Tuitions", value: dashboard.stats.pendingTuitions, icon: ClipboardCheck },
+    { label: "Approved Tuitions", value: dashboard.stats.approvedTuitions, icon: CheckCircle2 },
+    {
+      label: "Total Stripe Revenue",
+      value: new Intl.NumberFormat("en-BD", {
+        style: "currency",
+        currency: "BDT",
+        maximumFractionDigits: 0,
+      }).format(dashboard.stats.revenue / 100),
+      icon: CircleDollarSign,
+    },
   ];
 
   return (
@@ -36,17 +45,11 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Platform statistics">
-        {stats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-xl border bg-background p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{label}</p>
-              <Icon className="size-5 text-primary" />
-            </div>
-            <p className="mt-3 text-3xl font-bold">{value}</p>
-          </div>
-        ))}
-      </section>
+      <DashboardStatCards
+        stats={stats}
+        label="Platform statistics"
+        className="sm:grid-cols-2 xl:grid-cols-3"
+      />
 
       <section className="mt-8 rounded-2xl border bg-background">
         <div className="flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -56,7 +59,7 @@ export default async function AdminDashboardPage() {
               {pending.total} tuition post{pending.total === 1 ? "" : "s"} awaiting review.
             </p>
           </div>
-          <Link href="/dashboard/admin/moderation">
+          <Link href="/dashboard/admin/tuitions">
             <Button variant="outline">
               Review listings
               <ArrowRight />

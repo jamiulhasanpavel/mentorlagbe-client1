@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AdminPayment } from "@/lib/dashboard-data";
 
 function getPlanName(planId: string) {
@@ -9,9 +10,13 @@ function getPlanName(planId: string) {
 export function AdminPaymentList({
   payments,
   total,
+  page,
+  totalPages,
 }: {
   payments: AdminPayment[];
   total: number;
+  page: number;
+  totalPages: number;
 }) {
   return (
     <div>
@@ -27,12 +32,22 @@ export function AdminPaymentList({
                 <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
                   Stripe ID: {payment.stripeInvoiceId || payment.stripeSessionId}
                 </p>
-                <p className="mt-1 break-all text-xs text-muted-foreground">
-                  User: {payment.userId}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  User: {payment.userName || payment.userId}
                 </p>
+                {payment.userEmail && (
+                  <p className="mt-1 break-all text-xs text-muted-foreground">
+                    Email: {payment.userEmail}
+                  </p>
+                )}
+                {payment.userRole && (
+                  <p className="mt-1 text-xs capitalize text-muted-foreground">
+                    Role: {payment.userRole}
+                  </p>
+                )}
                 {payment.createdAt && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Created {new Date(payment.createdAt).toLocaleDateString()}
+                    Payment date: {new Date(payment.createdAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
@@ -57,6 +72,27 @@ export function AdminPaymentList({
         <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
           No payment records are available.
         </div>
+      )}
+      {totalPages > 1 && (
+        <nav aria-label="Transaction pages" className="mt-4 flex items-center justify-between border-t pt-4">
+          <Link
+            href={`/dashboard/admin/transactions?page=${Math.max(1, page - 1)}`}
+            aria-disabled={page <= 1}
+            className={`rounded-lg border px-3 py-2 text-sm ${page <= 1 ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Previous
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Link
+            href={`/dashboard/admin/transactions?page=${Math.min(totalPages, page + 1)}`}
+            aria-disabled={page >= totalPages}
+            className={`rounded-lg border px-3 py-2 text-sm ${page >= totalPages ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Next
+          </Link>
+        </nav>
       )}
     </div>
   );

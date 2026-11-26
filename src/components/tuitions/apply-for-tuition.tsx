@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 export function ApplyForTuition({ tuitionId }: { tuitionId: string }) {
   const { data: session, isPending } = authClient.useSession();
   const [message, setMessage] = useState("");
+  const [preferredSchedule, setPreferredSchedule] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +24,7 @@ export function ApplyForTuition({ tuitionId }: { tuitionId: string }) {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tuitionId, message }),
+        body: JSON.stringify({ tuitionId, message, preferredSchedule }),
       });
       const result: unknown = await response.json();
       const body =
@@ -42,6 +43,7 @@ export function ApplyForTuition({ tuitionId }: { tuitionId: string }) {
 
       setSuccessMessage("Your application has been submitted.");
       setMessage("");
+      setPreferredSchedule("");
     } catch (error: unknown) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to submit your application.",
@@ -78,6 +80,16 @@ export function ApplyForTuition({ tuitionId }: { tuitionId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+      <label className="grid gap-2 text-sm font-medium">
+        Preferred schedule
+        <input
+          maxLength={120}
+          value={preferredSchedule}
+          onChange={(event) => setPreferredSchedule(event.currentTarget.value)}
+          placeholder="e.g. Sunday, Tuesday and Thursday after 5 PM"
+          className="h-11 rounded-lg border bg-background px-3 text-sm outline-none focus:ring-3 focus:ring-ring/30"
+        />
+      </label>
       <label className="grid gap-2 text-sm font-medium">
         Message to the tutor
         <textarea

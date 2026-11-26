@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { DashboardApplication } from "@/lib/dashboard-data";
+import { formatTuitionBudget } from "@/lib/format-tuition-budget";
 
 export function ApplicationList({
   applications,
@@ -17,6 +18,45 @@ export function ApplicationList({
   const [busyId, setBusyId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  async function cancelApplication(application: DashboardApplication) {
+    if (!window.confirm(`Cancel your application for "${application.tuitionTitle}"?`)) {
+      return;
+    }
+
+    setBusyId(application.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+    try {
+      const response = await fetch(`/api/applications/${application.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const body: unknown = await response.json();
+      const result =
+        typeof body === "object" && body !== null
+          ? (body as Record<string, unknown>)
+          : null;
+      if (!response.ok || result?.success !== true) {
+        setErrorMessage(
+          typeof result?.message === "string"
+            ? result.message
+            : "Unable to cancel this application.",
+        );
+        return;
+      }
+
+      setItems((current) => current.filter((item) => item.id !== application.id));
+      setSuccessMessage("Application canceled.");
+      router.refresh();
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to cancel this application.",
+      );
+    } finally {
+      setBusyId("");
+    }
+  }
 
   async function updateStatus(id: string, status: "accepted" | "rejected") {
     setBusyId(id);
@@ -61,9 +101,13 @@ export function ApplicationList({
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed px-5 py-14 text-center">
-        <h2 className="text-lg font-bold">No applications yet</h2>
+        <h2 className="text-lg font-bold">
+          {canManage ? "No applicants yet" : "No applications yet"}
+        </h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-          Applications will appear here as soon as a student applies to a tuition.
+          {canManage
+            ? "Student applications will appear here when someone applies to your tuition."
+            : "Your tuition applications will appear here."}
         </p>
       </div>
     );
@@ -87,15 +131,34 @@ export function ApplicationList({
             <div>
               <h2 className="font-semibold">{application.tuitionTitle}</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Submitted {new Date(application.createdAt).toLocaleDateString()}
+                Applied {new Date(application.createdAt).toLocaleDateString()}
               </p>
             </div>
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold capitalize text-primary">
               {application.status}
             </span>
           </div>
+          {canManage ? (
+            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <p>Student: {application.studentName || "Student"}</p>
+              {application.studentEmail && <p>Email: {application.studentEmail}</p>}
+              {application.studentPhone && <p>Phone: {application.studentPhone}</p>}
+              {application.preferredSchedule && (
+                <p>Preferred schedule: {application.preferredSchedule}</p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <p>Tutor: {application.tutorName || "Tutor"}</p>
+              {application.tutorEmail && <p>Email: {application.tutorEmail}</p>}
+              {typeof application.monthlyFee === "number" && (
+                <p>Monthly fee: {formatTuitionBudget(application.monthlyFee)}</p>
+              )}
+            </div>
+          )}
           {application.message && (
             <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+              {canManage && <span className="font-semibold text-foreground">Note: </span>}
               {application.message}
             </p>
           )}
@@ -117,6 +180,19 @@ export function ApplicationList({
                 onClick={() => updateStatus(application.id, "rejected")}
               >
                 Reject
+              </Button>
+            </div>
+          )}
+          {!canManage && application.status === "pending" && (
+            <div className="mt-4">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busyId === application.id}
+                onClick={() => void cancelApplication(application)}
+              >
+                {busyId === application.id ? "Canceling..." : "Cancel application"}
               </Button>
             </div>
           )}

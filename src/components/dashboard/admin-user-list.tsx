@@ -1,21 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { AdminUser } from "@/lib/dashboard-data";
 
 export function AdminUserList({
   users,
   total,
+  currentUserId,
+  page,
+  totalPages,
 }: {
   users: AdminUser[];
   total: number;
+  currentUserId: string;
+  page: number;
+  totalPages: number;
 }) {
   const [items, setItems] = useState(users);
   const [busyId, setBusyId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function updateRole(userId: string, role: "student" | "tutor") {
+  async function updateRole(userId: string, role: AdminUser["role"]) {
     setBusyId(userId);
     setErrorMessage("");
     setSuccessMessage("");
@@ -82,28 +89,23 @@ export function AdminUserList({
                 <label className="text-xs font-medium text-muted-foreground" htmlFor={`role-${user.id}`}>
                   Role
                 </label>
-                {user.role === "admin" ? (
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    Administrator
-                  </span>
-                ) : (
-                  <select
-                    id={`role-${user.id}`}
-                    value={user.role}
-                    disabled={busyId === user.id}
-                    onChange={(event) => {
-                      const role = event.currentTarget.value;
-                      if (role === "student" || role === "tutor") {
-                        void updateRole(user.id, role);
-                      }
-                    }}
-                    className="h-9 rounded-lg border bg-background px-3 text-sm"
-                  >
-                    <option value="admin">Administrator</option>
-                    <option value="student">Student</option>
-                    <option value="tutor">Tutor</option>
-                  </select>
-                )}
+                <select
+                  id={`role-${user.id}`}
+                  value={user.role}
+                  disabled={busyId === user.id || user.id === currentUserId}
+                  onChange={(event) => {
+                    const role = event.currentTarget.value;
+                    if (role === "student" || role === "tutor" || role === "admin") {
+                      void updateRole(user.id, role);
+                    }
+                  }}
+                  className="h-9 rounded-lg border bg-background px-3 text-sm"
+                  aria-label={`Role for ${user.email}`}
+                >
+                  <option value="student">Student</option>
+                  <option value="tutor">Tutor</option>
+                  <option value="admin">Administrator</option>
+                </select>
               </div>
             </article>
           ))}
@@ -112,6 +114,27 @@ export function AdminUserList({
         <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
           No users found.
         </div>
+      )}
+      {totalPages > 1 && (
+        <nav aria-label="User pages" className="flex items-center justify-between border-t pt-4">
+          <Link
+            href={`/dashboard/admin/users?page=${Math.max(1, page - 1)}`}
+            aria-disabled={page <= 1}
+            className={`rounded-lg border px-3 py-2 text-sm ${page <= 1 ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Previous
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Link
+            href={`/dashboard/admin/users?page=${Math.min(totalPages, page + 1)}`}
+            aria-disabled={page >= totalPages}
+            className={`rounded-lg border px-3 py-2 text-sm ${page >= totalPages ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Next
+          </Link>
+        </nav>
       )}
     </div>
   );

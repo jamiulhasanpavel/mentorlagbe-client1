@@ -2,15 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { Tuition } from "@/lib/tuitions";
 
 export function ModerationQueue({
   tuitions,
   total,
+  status,
+  page,
+  totalPages,
 }: {
   tuitions: Tuition[];
   total: number;
+  status: "pending" | "approved" | "rejected";
+  page: number;
+  totalPages: number;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(tuitions);
@@ -18,7 +25,7 @@ export function ModerationQueue({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function reviewTuition(id: string, status: "approved" | "rejected") {
+  async function reviewTuition(id: string, newStatus: "approved" | "rejected") {
     setBusyId(id);
     setErrorMessage("");
     setSuccessMessage("");
@@ -27,7 +34,7 @@ export function ModerationQueue({
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: newStatus }),
       });
       const body: unknown = await response.json();
       const result =
@@ -44,8 +51,14 @@ export function ModerationQueue({
         return;
       }
 
-      setItems((current) => current.filter((tuition) => tuition.id !== id));
-      setSuccessMessage(`Tuition ${status}.`);
+      setItems((current) =>
+        status === newStatus
+          ? current.map((tuition) =>
+              tuition.id === id ? { ...tuition, status: newStatus } : tuition,
+            )
+          : current.filter((tuition) => tuition.id !== id),
+      );
+      setSuccessMessage(`Tuition ${newStatus}.`);
       router.refresh();
     } catch (error: unknown) {
       setErrorMessage(
@@ -59,7 +72,7 @@ export function ModerationQueue({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Showing {items.length} of {total} pending listing{total === 1 ? "" : "s"}.
+        Showing {items.length} of {total} {status} listing{total === 1 ? "" : "s"}.
       </p>
       {errorMessage && (
         <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
@@ -82,8 +95,8 @@ export function ModerationQueue({
                   {[tuition.className, tuition.location].filter(Boolean).join(" · ") || "Details not provided"}
                 </p>
               </div>
-              <span className="w-fit rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700">
-                Pending
+              <span className="w-fit rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold capitalize text-amber-700">
+                {tuition.status}
               </span>
             </div>
             {tuition.description && (
@@ -114,11 +127,32 @@ export function ModerationQueue({
         ))
       ) : (
         <div className="rounded-2xl border border-dashed px-5 py-14 text-center">
-          <h3 className="font-semibold">No pending listings</h3>
+          <h3 className="font-semibold">No {status} listings</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Newly submitted tuition posts will appear here.
           </p>
         </div>
+      )}
+      {totalPages > 1 && (
+        <nav aria-label="Tuition listing pages" className="flex items-center justify-between border-t pt-4">
+          <Link
+            href={`/dashboard/admin/tuitions?status=${status}&page=${Math.max(1, page - 1)}`}
+            aria-disabled={page <= 1}
+            className={`rounded-lg border px-3 py-2 text-sm ${page <= 1 ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Previous
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Link
+            href={`/dashboard/admin/tuitions?status=${status}&page=${Math.min(totalPages, page + 1)}`}
+            aria-disabled={page >= totalPages}
+            className={`rounded-lg border px-3 py-2 text-sm ${page >= totalPages ? "pointer-events-none opacity-50" : "hover:bg-muted"}`}
+          >
+            Next
+          </Link>
+        </nav>
       )}
     </div>
   );

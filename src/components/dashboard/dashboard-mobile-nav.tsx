@@ -32,7 +32,7 @@ function getDashboardLinks(role: string): DashboardLink[] {
   if (role === "student") {
     links.push(
       { href: "/dashboard/student", label: "Student dashboard", icon: GraduationCap },
-      { href: "/dashboard/student/applications", label: "My applications", icon: FileText },
+      { href: "/dashboard/student/my-applications", label: "My applications", icon: FileText },
       { href: "/dashboard/student/messages", label: "Messages", icon: Mail },
     );
   } else if (role === "tutor") {
@@ -40,14 +40,14 @@ function getDashboardLinks(role: string): DashboardLink[] {
       { href: "/dashboard/tutor", label: "Tutor dashboard", icon: GraduationCap },
       { href: "/dashboard/tutor/messages", label: "Messages", icon: Mail },
       { href: "/dashboard/tutor/applicants", label: "Applicants", icon: Users },
-      { href: "/dashboard/tutor/tuitions", label: "My tuitions", icon: BriefcaseBusiness },
+      { href: "/dashboard/tutor/my-tuitions", label: "My tuitions", icon: BriefcaseBusiness },
     );
   } else if (role === "admin") {
     links.push(
       { href: "/dashboard/admin", label: "Admin dashboard", icon: LayoutDashboard },
-      { href: "/dashboard/admin/moderation", label: "Content moderation", icon: ClipboardCheck },
+      { href: "/dashboard/admin/tuitions", label: "Tuition approval", icon: ClipboardCheck },
       { href: "/dashboard/admin/users", label: "User management", icon: Shield },
-      { href: "/dashboard/admin/payments", label: "Payment history", icon: CreditCard },
+      { href: "/dashboard/admin/transactions", label: "Transaction management", icon: CreditCard },
     );
   }
 
