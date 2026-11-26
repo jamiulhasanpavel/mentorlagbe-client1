@@ -20,12 +20,15 @@ export default function SignUpPage() {
 
     const formData = new FormData(event.currentTarget);
     const role = formData.get("role") === "tutor" ? "tutor" : "student";
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
 
     try {
       const { error } = await authClient.signUp.email({
-        name: String(formData.get("name") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        password: String(formData.get("password") ?? ""),
+        name,
+        email,
+        password,
         role,
         callbackURL: "/",
       });

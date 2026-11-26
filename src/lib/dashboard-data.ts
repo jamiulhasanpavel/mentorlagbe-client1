@@ -129,7 +129,7 @@ function isApplication(value: unknown): value is DashboardApplication {
   );
 }
 
-async function getApiData(path: string): Promise<unknown> {
+async function getApiData(path: string, preserveEnvelope = false): Promise<unknown> {
   const apiBaseUrl = getBackendApiUrl();
   const requestHeaders = await headers();
   const cookie = requestHeaders.get("cookie");
@@ -155,7 +155,7 @@ async function getApiData(path: string): Promise<unknown> {
   if (!isRecord(body) || body.success !== true || !("data" in body)) {
     throw new Error("Backend returned an invalid response.");
   }
-  return body.data;
+  return preserveEnvelope ? body : body.data;
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -279,6 +279,7 @@ export async function getAdminTuitions(
 ) {
   const data = await getApiData(
     `/api/tuition?status=${status}&limit=100&page=${page}`,
+    true,
   );
   if (
     !isRecord(data) ||
@@ -302,7 +303,7 @@ export async function getAdminTuitions(
 export async function getAdminUsers(
   page = 1,
 ): Promise<{ data: AdminUser[]; total: number; page: number; totalPages: number }> {
-  const data = await getApiData(`/api/users/admin?limit=100&page=${page}`);
+  const data = await getApiData(`/api/users/admin?limit=100&page=${page}`, true);
   if (
     !isRecord(data) ||
     !Array.isArray(data.data) ||
@@ -342,7 +343,7 @@ export async function getAdminUsers(
 export async function getAdminPayments(
   page = 1,
 ): Promise<{ data: AdminPayment[]; total: number; page: number; totalPages: number }> {
-  const data = await getApiData(`/api/payments/admin?limit=100&page=${page}`);
+  const data = await getApiData(`/api/payments/admin?limit=100&page=${page}`, true);
   if (
     !isRecord(data) ||
     !Array.isArray(data.data) ||

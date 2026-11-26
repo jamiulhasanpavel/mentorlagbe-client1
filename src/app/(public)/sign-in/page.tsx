@@ -58,7 +58,7 @@ export default function SignInPage() {
     setErrorMessage("");
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
     const rememberMe = formData.get("remember") === "on";
     const callbackURL = getCallbackURL();

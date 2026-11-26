@@ -18,6 +18,7 @@ async function proxyAuthRequest(request: Request) {
     headers,
     redirect: "manual",
     cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
   };
   if (request.method !== "GET" && request.method !== "HEAD") {
     requestInit.body = await request.arrayBuffer();
@@ -28,9 +29,20 @@ async function proxyAuthRequest(request: Request) {
     response = await fetch(backendUrl, requestInit);
   } catch (error) {
     console.error("Authentication backend request failed.", error);
+    const message =
+      error instanceof Error && error.name === "TimeoutError"
+        ? "The authentication service timed out. Please try again."
+        : "The authentication service is unavailable.";
     return Response.json(
-      { message: "The authentication service is unavailable." },
-      { status: 502 },
+      { message },
+      { status: 504, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  if (response.status === 404) {
+    return Response.json(
+      { message: "Authentication is currently unavailable. The backend auth service needs to be restarted or redeployed." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
 
